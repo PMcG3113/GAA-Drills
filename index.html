@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0e1525" />
+<!-- iPhone: behaves like a full-screen app when added to the Home Screen -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Playbook" />
+<title>Arya's Playbook</title>
+
+<!-- Little app emblem (a star on a green pitch) used as the favicon / home-screen icon -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%2321c95e'/%3E%3Cpath d='M90 38l14 30 33 4-24 23 6 33-29-16-29 16 6-33-24-23 33-4z' fill='%230e1525'/%3E%3C/svg%3E" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%2321c95e'/%3E%3Cpath d='M90 38l14 30 33 4-24 23 6 33-29-16-29 16 6-33-24-23 33-4z' fill='%230e1525'/%3E%3C/svg%3E" />
+
+<style>
+  :root{
+    --bg:#0e1525; --bg2:#0b1120;
+    --card:#18233a; --card2:#1f2c47; --line:#2a3a5c;
+    --text:#eaf0fb; --muted:#93a4c4; --muted2:#6f82a6;
+    --accent:#21c95e; --accent-d:#16a34a; --gold:#ffc54d;
+    --c-football:#34d399; --c-camogie:#f472b6; --c-agility:#a78bfa; --c-run:#fbbf24;
+    --danger:#f87171;
+    --r:18px; --r-sm:12px;
+    --safe-top:env(safe-area-inset-top,0px);
+    --safe-bot:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:none;
+  }
+  h1,h2,h3{margin:0;font-weight:800;letter-spacing:-.02em}
+  button{font-family:inherit;cursor:pointer;border:none;color:inherit;background:none}
+  input,select,textarea{font-family:inherit;font-size:16px}
+  a{color:var(--accent)}
+
+  /* ---------- Splash ---------- */
+  #splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg);z-index:100}
+  #splash .emblem{width:84px;height:84px;border-radius:22px;background:linear-gradient(135deg,var(--accent),var(--accent-d));display:flex;align-items:center;justify-content:center;box-shadow:0 12px 40px rgba(33,201,94,.35)}
+  #splash .emblem svg{width:50px;height:50px}
+  #splash .ttl{font-size:22px;font-weight:800}
+  #splash .sub{color:var(--muted);font-size:14px}
+  .spin{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp 0.8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  /* ---------- Generic layout ---------- */
+  .screen{display:none}
+  .screen.active{display:block}
+  .wrap{max-width:680px;margin:0 auto;padding:0 16px}
+
+  /* ---------- Join ---------- */
+  #join{display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+  #join.show{display:flex}
+  #join .box{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:26px}
+  #join h1{font-size:24px;margin-bottom:4px}
+  #join p.lead{color:var(--muted);font-size:14px;margin:0 0 18px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px}
+  .field input{width:100%;padding:13px 14px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--text)}
+  .field .hint{font-size:12px;color:var(--muted2);margin-top:5px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 18px;border-radius:var(--r-sm);font-weight:800;background:var(--accent);color:#06210f}
+  .btn.full{width:100%}
+  .btn.sec{background:var(--card2);color:var(--text);border:1px solid var(--line)}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+  .btn.danger{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+  .btn:active{transform:translateY(1px)}
+  .btn.sm{padding:8px 12px;font-size:13px;border-radius:10px}
+
+  /* ---------- App shell ---------- */
+  #app{display:none;padding-bottom:calc(86px + var(--safe-bot))}
+  header.bar{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,var(--bg) 70%,rgba(14,21,37,.85));backdrop-filter:blur(8px);padding-top:var(--safe-top)}
+  header.bar .inner{display:flex;align-items:center;gap:12px;padding:12px 16px 10px;max-width:680px;margin:0 auto}
+  header .emblem{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--accent),var(--accent-d));display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  header .emblem svg{width:22px;height:22px}
+  header .h-ttl{font-size:18px;font-weight:800;line-height:1.1}
+  header .h-sub{font-size:12px;color:var(--muted)}
+  header .view-name{margin-left:auto;font-size:13px;color:var(--muted);font-weight:700}
+
+  /* ---------- Bottom nav ---------- */
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--bg2);border-top:1px solid var(--line);padding-bottom:var(--safe-bot)}
+  nav.tabs .inner{display:flex;max-width:680px;margin:0 auto}
+  nav.tabs button{flex:1;padding:9px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted2);font-size:11px;font-weight:700}
+  nav.tabs button svg{width:23px;height:23px}
+  nav.tabs button.active{color:var(--accent)}
+
+  /* ---------- Cards ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px;margin-bottom:12px}
+  .section-h{display:flex;align-items:center;gap:10px;margin:18px 2px 10px}
+  .section-h h2{font-size:15px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .section-h .line{flex:1;height:1px;background:var(--line)}
+
+  .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.02em}
+  .empty{color:var(--muted2);text-align:center;padding:26px 10px;font-size:14px}
+
+  /* day chips */
+  .days{display:flex;gap:7px;overflow-x:auto;padding:4px 0 8px;-webkit-overflow-scrolling:touch}
+  .days::-webkit-scrollbar{display:none}
+  .day-chip{flex:0 0 auto;min-width:50px;text-align:center;padding:8px 6px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+  .day-chip .dn{font-size:12px;color:var(--muted);font-weight:800;text-transform:uppercase}
+  .day-chip .dd{font-size:11px;color:var(--muted2);margin-top:2px}
+  .day-chip.sel{background:var(--accent);border-color:var(--accent)}
+  .day-chip.sel .dn,.day-chip.sel .dd{color:#06210f}
+  .day-chip.today:not(.sel){border-color:var(--accent)}
+  .day-chip .dot{width:5px;height:5px;border-radius:50%;background:var(--gold);margin:3px auto 0}
+
+  /* day header / ring */
+  .day-head{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+  .ring{--p:0;width:54px;height:54px;border-radius:50%;flex:0 0 auto;
+    background:conic-gradient(var(--accent) calc(var(--p)*1%), var(--line) 0);
+    display:flex;align-items:center;justify-content:center}
+  .ring i{width:42px;height:42px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:800;font-size:13px}
+  .day-head .fx{font-size:13px;color:var(--muted)}
+  .day-head h2{font-size:19px}
+
+  /* item card */
+  .item .top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .item .name{font-size:17px;font-weight:800;margin:2px 0}
+  .item .meta{font-size:13px;color:var(--muted);font-weight:700}
+  .item .note{font-size:13px;color:var(--gold);margin-top:6px}
+  .watch{margin-left:auto;display:inline-flex;align-items:center;gap:5px;background:var(--card2);border:1px solid var(--line);padding:7px 11px;border-radius:10px;font-size:12px;font-weight:800;color:var(--text)}
+  .watch svg{width:14px;height:14px}
+  .sets{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
+  .set{min-width:46px;height:42px;padding:0 12px;border-radius:11px;background:var(--bg2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;gap:6px;font-weight:800;font-size:14px;color:var(--muted)}
+  .set.done{background:var(--accent);border-color:var(--accent);color:#06210f}
+  .set .ck{width:15px;height:15px}
+  details.cues{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+  details.cues summary{font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;list-style:none}
+  details.cues summary::-webkit-details-marker{display:none}
+  details.cues ul{margin:8px 0 2px;padding-left:18px}
+  details.cues li{font-size:14px;margin-bottom:4px}
+
+  /* stat row */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px}
+  .stat .v{font-size:22px;font-weight:800}
+  .stat .l{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.03em;margin-top:2px}
+
+  /* stopwatch */
+  .sw{text-align:center;padding:8px 0 4px}
+  .sw .time{font-variant-numeric:tabular-nums;font-size:60px;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .sw .dist{color:var(--muted);font-weight:700;margin-top:4px}
+  .sw .row{display:flex;gap:10px;justify-content:center;margin-top:18px}
+  .sw .row .btn{min-width:108px}
+  .distset{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;color:var(--muted);font-size:14px}
+  .distset input{width:78px;text-align:center;padding:9px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--text)}
+
+  /* list rows */
+  .row-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .row-item:last-child{border-bottom:none}
+  .row-item .ri-main{flex:1;min-width:0}
+  .row-item .ri-t{font-weight:800}
+  .row-item .ri-s{font-size:12px;color:var(--muted)}
+  .row-item .ri-v{font-weight:800;font-size:16px;text-align:right}
+  .row-item .ri-v small{display:block;font-size:11px;color:var(--muted);font-weight:700}
+
+  /* chart */
+  .chart{width:100%;height:auto;display:block}
+  .chart text{fill:var(--muted2);font-size:9px}
+  .chart .ln{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+  .chart .dt{fill:var(--accent)}
+  .chart .gl{stroke:var(--line);stroke-width:1}
+
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;background:var(--card2);border:1px solid var(--line)}
+  .imp-up{color:var(--accent)} .imp-down{color:var(--danger)}
+
+  .note-list li{font-size:14px;color:var(--muted);margin-bottom:9px;line-height:1.5}
+
+  /* modal */
+  #ov{position:fixed;inset:0;background:rgba(5,8,16,.66);backdrop-filter:blur(3px);z-index:60;display:none;align-items:flex-end;justify-content:center}
+  #ov.open{display:flex}
+  #mbox{width:100%;max-width:560px;max-height:88vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:22px 22px 0 0;padding:20px 18px calc(20px + var(--safe-bot));margin:0}
+  @media(min-width:600px){#ov{align-items:center}#mbox{border-radius:22px;margin:20px}}
+  #mbox h3{font-size:19px;margin-bottom:14px}
+  #mbox .field textarea{width:100%;min-height:80px;padding:11px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--text)}
+  #mbox .field select{width:100%;padding:12px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--text)}
+  #mbox .check{display:flex;align-items:center;gap:10px}
+  #mbox .check input{width:22px;height:22px}
+  .m-actions{display:flex;gap:10px;margin-top:18px}
+  .m-actions .btn{flex:1}
+
+  /* toast */
+  #toast{position:fixed;left:50%;bottom:calc(96px + var(--safe-bot));transform:translateX(-50%) translateY(20px);background:#05209a00;z-index:80;opacity:0;transition:.25s;pointer-events:none}
+  #toast .in{background:var(--text);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:800;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .coach-sec{margin-bottom:22px}
+  .coach-day{margin-bottom:12px}
+  .coach-day .cd-h{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .coach-day .cd-h .fx{font-size:12px;color:var(--muted)}
+  .mini{font-size:12px;color:var(--muted2)}
+  .lib-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .lib-row:last-child{border-bottom:none}
+  .lib-row .lr-main{flex:1;min-width:0}
+  .lib-row .lr-t{font-weight:700;font-size:15px}
+  .lib-row .lr-s{font-size:12px;color:var(--muted)}
+  .iconbtn{width:34px;height:34px;border-radius:9px;background:var(--card2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .iconbtn svg{width:16px;height:16px}
+  .row-actions{display:flex;gap:6px}
+</style>
+</head>
+<body>
+
+<!-- ===================== SPLASH ===================== -->
+<div id="splash">
+  <div class="emblem"><svg viewBox="0 0 180 180"><path d="M90 30l16 34 38 5-27 26 7 38-34-18-34 18 7-38-27-26 38-5z" fill="#0e1525"/></svg></div>
+  <div style="text-align:center">
+    <div class="ttl">Arya's Playbook</div>
+    <div class="sub" id="splashSub">Connecting…</div>
+  </div>
+  <div class="spin"></div>
+</div>
+
+<!-- ===================== JOIN ===================== -->
+<div id="join" class="screen">
+  <div class="box">
+    <h1>Arya's Playbook</h1>
+    <p class="lead">Skills · Agility · Run — synced between your phone and hers.</p>
+    <div class="field">
+      <label>Athlete name</label>
+      <input id="jName" value="Arya" autocomplete="off" />
+    </div>
+    <div class="field">
+      <label>Space code</label>
+      <input id="jCode" value="arya-gaa" autocapitalize="none" autocorrect="off" autocomplete="off" />
+      <div class="hint">Use the <b>same code</b> on both phones so they share the plan.</div>
+    </div>
+    <div class="field">
+      <label>Coach PIN</label>
+      <input id="jPin" value="1234" inputmode="numeric" maxlength="8" />
+      <div class="hint">Unlocks Coach mode for editing. Arya doesn't need this.</div>
+    </div>
+    <button class="btn full" id="jGo">Open Playbook</button>
+    <div class="hint" style="margin-top:12px;text-align:center" id="jErr"></div>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app">
+  <header class="bar">
+    <div class="inner">
+      <div class="emblem"><svg viewBox="0 0 180 180"><path d="M90 30l16 34 38 5-27 26 7 38-34-18-34 18 7-38-27-26 38-5z" fill="#0e1525"/></svg></div>
+      <div>
+        <div class="h-ttl" id="hTitle">Arya's Playbook</div>
+        <div class="h-sub" id="hSub">Skills · Agility · Run</div>
+      </div>
+      <div class="view-name" id="hView"></div>
+    </div>
+  </header>
+
+  <main class="wrap" id="main"></main>
+
+  <nav class="tabs">
+    <div class="inner">
+      <button data-v="today" class="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+        Today
+      </button>
+      <button data-v="run">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        Run
+      </button>
+      <button data-v="tests">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-2 4 2 4H5"/></svg>
+        Tests
+      </button>
+      <button data-v="progress">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M4 19h16M8 16l3-4 3 3 4-7"/></svg>
+        Progress
+      </button>
+      <button data-v="coach">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+        Coach
+      </button>
+    </div>
+  </nav>
+</div>
+
+<!-- ===================== MODAL + TOAST ===================== -->
+<div id="ov"><div id="mbox"></div></div>
+<div id="toast"><div class="in"></div></div>
+
+<!-- Firebase SDK (compat build = simple, readable API), same versions as Bubbli -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<script>
+/* ============================================================
+   1) PASTE YOUR FIREBASE CONFIG HERE
+   ------------------------------------------------------------
+   Firebase console → Project settings → "Your apps" → Web app →
+   copy the firebaseConfig object and replace the one below.
+   Make sure databaseURL is included. See SETUP.md.
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBLTDMeuWumV1szhQcza8DFjLNAAffYQzg",
+  authDomain: "gaa-drills.firebaseapp.com",
+  databaseURL: "https://gaa-drills-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "gaa-drills",
+  storageBucket: "gaa-drills.firebasestorage.app",
+  messagingSenderId: "264521403545",
+  appId: "1:264521403545:web:e3df24df002c82ed1b3c08"
+};
+
+/* ============================================================
+   2) SEED CONTENT — researched & safety-reviewed for ~12-13yo.
+   Written into a space the first time it's opened; fully
+   editable afterwards in Coach mode.
+   ============================================================ */
+const SEED = {
+  library: {
+    "toe-to-hand-pickup":{id:"toe-to-hand-pickup",name:"Toe-to-Hand Pick-Up",category:"football",type:"reps",sets:3,reps:12,durationSec:null,cues:["Roll your foot over the ball and lift with the laces","Bend the knees, get low to the ground","Scoop it cleanly into both hands - no slapping"],search:"https://www.youtube.com/results?search_query=Gaelic%20football%20pick%20up%20the%20ball%20toe%20to%20hand%20technique%20tutorial",video:null},
+    "hand-pass":{id:"hand-pass",name:"Hand Pass",category:"football",type:"reps",sets:3,reps:15,durationSec:null,cues:["Strike the ball off the open palm, not a throw","Ball rests on one hand, drive through with the other","Follow through towards your target"],search:"https://www.youtube.com/results?search_query=Gaelic%20football%20hand%20pass%20technique%20tutorial%20kids",video:null},
+    "fist-pass":{id:"fist-pass",name:"Fist Pass",category:"football",type:"reps",sets:3,reps:12,durationSec:null,cues:["Make a firm fist, strike with the knuckles","Hold the ball steady in the non-striking hand","Punch straight through the centre of the ball"],search:"https://www.youtube.com/results?search_query=Gaelic%20football%20fist%20pass%20technique%20coaching%20drill",video:null},
+    "kick-pass-both-feet":{id:"kick-pass-both-feet",name:"Kick Pass Off Both Feet",category:"football",type:"reps",sets:4,reps:8,durationSec:null,cues:["Strike with the laces (instep), not the toe","Non-kicking foot points at the target","Practise weaker foot every second set"],search:"https://www.youtube.com/results?search_query=Gaelic%20football%20kick%20pass%20off%20both%20feet%20technique%20tutorial",video:null},
+    "high-catch":{id:"high-catch",name:"High Catch (Fielding)",category:"football",type:"reps",sets:3,reps:10,durationSec:null,cues:["Time your jump, attack the ball at its highest point","Reach with both hands, fingers spread","Pull it into your chest as you land"],search:"https://www.youtube.com/results?search_query=Gaelic%20football%20high%20catch%20fielding%20technique%20coaching%20tutorial",video:null},
+    "bounce":{id:"bounce",name:"Bounce",category:"football",type:"reps",sets:3,reps:12,durationSec:null,cues:["Push the ball down firmly with two hands","Eyes up - feel the bounce, don't watch it","Remember: only one bounce between solos"],search:"https://www.youtube.com/results?search_query=Gaelic%20football%20bounce%20the%20ball%20technique%20rules%20tutorial",video:null},
+    "point-kicking":{id:"point-kicking",name:"Point Kicking (from Hand)",category:"football",type:"reps",sets:4,reps:8,durationSec:null,cues:["Drop the ball onto your laces from a steady hand","Strike through the bottom half for height","Follow through with your knee towards the posts"],search:"https://www.youtube.com/results?search_query=Gaelic%20football%20point%20kicking%20from%20hand%20technique%20tutorial",video:null},
+    "block-down":{id:"block-down",name:"Block Down",category:"football",type:"reps",sets:3,reps:10,durationSec:null,cues:["Time the block as the kicker drops the ball","Spread your hands wide, fingers firm","Stay on your feet - never dive in early"],search:"https://www.youtube.com/results?search_query=Gaelic%20football%20block%20down%20technique%20coaching%20drill",video:null},
+    "wall-ball-control":{id:"wall-ball-control",name:"Wall Ball Control (Catch & Pass)",category:"football",type:"time",sets:3,reps:null,durationSec:120,cues:["Use a fist or hand pass against the wall","Soft hands - catch and reset quickly","Alternate left and right hands to build both sides"],search:"https://www.youtube.com/results?search_query=Gaelic%20football%20wall%20ball%20solo%20practice%20drills%20at%20home",video:null},
+    "solo-run":{id:"solo-run",name:"Solo Run (Balancing On The Hurley)",category:"camogie",type:"time",sets:3,reps:null,durationSec:30,cues:["Tap ball gently on the bas","Head up, eyes forward","Keep light running rhythm"],search:"https://www.youtube.com/results?search_query=camogie%20solo%20run%20balancing%20ball%20technique",video:null},
+    "roll-lift":{id:"roll-lift",name:"Roll Lift",category:"camogie",type:"reps",sets:3,reps:12,durationSec:null,cues:["Hurley flat behind the ball","Roll ball up the bas","Catch in non-dominant hand"],search:"https://www.youtube.com/results?search_query=camogie%20roll%20lift%20technique%20tutorial",video:null},
+    "jab-lift":{id:"jab-lift",name:"Jab Lift",category:"camogie",type:"reps",sets:3,reps:12,durationSec:null,cues:["Stab toe of hurley under ball","Sharp upward flick","Rise ball straight into hand"],search:"https://www.youtube.com/results?search_query=camogie%20jab%20lift%20drill%20beginners",video:null},
+    "grip-ready-position":{id:"grip-ready-position",name:"Grip & Ready Position",category:"camogie",type:"time",sets:2,reps:null,durationSec:60,cues:["Dominant hand on top","Hands together, knuckles aligned","Knees soft, weight balanced"],search:"https://www.youtube.com/results?search_query=camogie%20correct%20hurley%20grip%20and%20stance",video:null},
+    "ground-strike":{id:"ground-strike",name:"Ground Strike",category:"camogie",type:"reps",sets:3,reps:10,durationSec:null,cues:["Eye on the ball","Swing low and flat","Follow through to target"],search:"https://www.youtube.com/results?search_query=camogie%20ground%20striking%20technique%20drill",video:null},
+    "overhead-strike":{id:"overhead-strike",name:"Overhead Strike (Pull)",category:"camogie",type:"reps",sets:3,reps:10,durationSec:null,cues:["Watch ball into the strike","Strike at highest point","Control the pull, stay safe"],search:"https://www.youtube.com/results?search_query=camogie%20overhead%20strike%20pulling%20technique",video:null},
+    "striking-both-sides":{id:"striking-both-sides",name:"Striking Off Both Sides",category:"camogie",type:"reps",sets:4,reps:8,durationSec:null,cues:["Switch top hand to lead","Step into the strike","Same swing path each side"],search:"https://www.youtube.com/results?search_query=camogie%20striking%20off%20left%20and%20right%20side%20drill",video:null},
+    "striking-on-the-run":{id:"striking-on-the-run",name:"Striking On The Run",category:"camogie",type:"reps",sets:3,reps:8,durationSec:null,cues:["Lift ball without stopping","Strike off the correct stride","Drive through to target"],search:"https://www.youtube.com/results?search_query=camogie%20striking%20on%20the%20run%20drill",video:null},
+    "hand-pass-off-hurley":{id:"hand-pass-off-hurley",name:"Hand Pass Off The Hurley",category:"camogie",type:"reps",sets:3,reps:12,durationSec:null,cues:["Toss ball off the bas","Strike with open palm","Follow through to receiver"],search:"https://www.youtube.com/results?search_query=camogie%20hand%20pass%20technique%20tutorial",video:null},
+    "catching-high-ball":{id:"catching-high-ball",name:"Catching A High Ball",category:"camogie",type:"reps",sets:3,reps:10,durationSec:null,cues:["Track the ball early","Hands up, fingers spread","Pull ball into the chest"],search:"https://www.youtube.com/results?search_query=camogie%20catching%20high%20ball%20technique%20drill",video:null},
+    "blocking":{id:"blocking",name:"Blocking",category:"camogie",type:"reps",sets:3,reps:10,durationSec:null,cues:["Hurley flat to the ground","Time it as they strike","Stay balanced, hands strong"],search:"https://www.youtube.com/results?search_query=camogie%20blocking%20technique%20tutorial",video:null},
+    "hooking":{id:"hooking",name:"Hooking",category:"camogie",type:"reps",sets:3,reps:10,durationSec:null,cues:["Approach from behind/side","Hook under their backswing","Catch the bas, don't slash"],search:"https://www.youtube.com/results?search_query=camogie%20hooking%20technique%20drill",video:null},
+    "frees-sideline-puck":{id:"frees-sideline-puck",name:"Frees & Sideline Puck",category:"camogie",type:"reps",sets:3,reps:8,durationSec:null,cues:["Set ball and feet first","Smooth low-to-high lift","Strike clean through the ball"],search:"https://www.youtube.com/results?search_query=camogie%20free%20taking%20and%20sideline%20cut%20technique",video:null},
+    "agility-ladder-two-feet-in":{id:"agility-ladder-two-feet-in",name:"Agility Ladder: Two-Feet-In",category:"agility",type:"reps",sets:3,reps:2,durationSec:null,cues:["Stay on the balls of your feet","Pump the arms in rhythm","Eyes up, quick light contacts"],search:"https://www.youtube.com/results?search_query=agility%20ladder%20two%20feet%20in%20drill%20for%20beginners%20youth",video:null},
+    "agility-ladder-lateral-in-out":{id:"agility-ladder-lateral-in-out",name:"Agility Ladder: Lateral In-and-Out",category:"agility",type:"reps",sets:3,reps:2,durationSec:null,cues:["Lead with the near foot","Keep hips low and square","Short, snappy steps"],search:"https://www.youtube.com/results?search_query=lateral%20agility%20ladder%20drill%20youth%20athletes%20how%20to",video:null},
+    "agility-ladder-icky-shuffle":{id:"agility-ladder-icky-shuffle",name:"Agility Ladder: Icky Shuffle",category:"agility",type:"reps",sets:3,reps:2,durationSec:null,cues:["In-in-out rhythm","Drive opposite arm to lead leg","Build speed only once the pattern is clean"],search:"https://www.youtube.com/results?search_query=icky%20shuffle%20agility%20ladder%20drill%20tutorial%20slow%20to%20fast",video:null},
+    "cone-zig-zag-cod":{id:"cone-zig-zag-cod",name:"Zig-Zag Cone Change-of-Direction",category:"agility",type:"reps",sets:3,reps:4,durationSec:null,cues:["Plant on the outside foot","Drop your hips to turn","Push off and reaccelerate"],search:"https://www.youtube.com/results?search_query=zig%20zag%20cone%20change%20of%20direction%20drill%20youth%20agility",video:null},
+    "5-10-5-pro-agility":{id:"5-10-5-pro-agility",name:"5-10-5 Pro Agility Shuttle (Technique)",category:"agility",type:"reps",sets:2,reps:2,durationSec:null,cues:["Touch the line with your hand","Stay low through the turn","Submaximal pace, focus on clean footwork"],search:"https://www.youtube.com/results?search_query=5-10-5%20pro%20agility%20shuttle%20drill%20technique%20for%20beginners",video:null},
+    "t-drill-practice":{id:"t-drill-practice",name:"T-Drill (Sprint, Shuffle, Backpedal)",category:"agility",type:"reps",sets:2,reps:3,durationSec:null,cues:["Face forward the whole drill","Don't cross your feet when shuffling","Controlled backpedal, chest over toes"],search:"https://www.youtube.com/results?search_query=T%20drill%20agility%20test%20how%20to%20perform%20youth%20athletes",video:null},
+    "deceleration-cutting-drill":{id:"deceleration-cutting-drill",name:"Deceleration & Cutting Drill",category:"agility",type:"reps",sets:3,reps:3,durationSec:null,cues:["Sink your hips to 'put the brakes on'","Knee tracks over the toes, don't let it cave in","Short choppy steps to slow, then cut"],search:"https://www.youtube.com/results?search_query=deceleration%20and%20cutting%20technique%20drill%20youth%20ACL%20injury%20prevention",video:null},
+    "line-hops":{id:"line-hops",name:"Line Hops (Forward/Back & Side-to-Side)",category:"agility",type:"time",sets:3,reps:null,durationSec:15,cues:["Land softly on the balls of your feet","Quiet, springy contacts","Keep knees soft and aligned"],search:"https://www.youtube.com/results?search_query=line%20hops%20plyometric%20drill%20for%20kids%20quick%20feet",video:null},
+    "broad-jump-stick":{id:"broad-jump-stick",name:"Standing Broad Jump (Stick Landing)",category:"agility",type:"reps",sets:3,reps:3,durationSec:null,cues:["Swing arms back then drive forward","Land soft, hips back, knees over toes","Hold the landing for two seconds"],search:"https://www.youtube.com/results?search_query=standing%20broad%20jump%20landing%20mechanics%20teaching%20youth%20athletes",video:null},
+    "acceleration-sprint-mechanics":{id:"acceleration-sprint-mechanics",name:"Acceleration Sprints (10-15m)",category:"agility",type:"reps",sets:2,reps:3,durationSec:null,cues:["Lean forward from the ankles","Drive the knees, punch the arms","Full recovery walk back between reps"],search:"https://www.youtube.com/results?search_query=sprint%20acceleration%20mechanics%20drill%20youth%20athletes%20technique",video:null},
+    "mirror-reaction-drill":{id:"mirror-reaction-drill",name:"Partner Mirror Reaction Drill",category:"agility",type:"time",sets:3,reps:null,durationSec:20,cues:["React to your partner, don't anticipate","Stay in an athletic stance","Short shuffle steps, stay balanced"],search:"https://www.youtube.com/results?search_query=partner%20mirror%20reaction%20agility%20drill%20youth%20athletes",video:null},
+    "easy-jog":{id:"easy-jog",name:"Easy Jog (~2 km)",category:"run",type:"distance",distanceKm:2,sets:1,reps:null,durationSec:null,cues:["Easy conversational pace","Relaxed shoulders","Nose-and-mouth breathing"],search:"https://www.youtube.com/results?search_query=easy%20jogging%20for%20beginners%20kids%20running%20technique",video:null},
+    "intervals-fartlek":{id:"intervals-fartlek",name:"Fartlek Intervals (~3 km)",category:"run",type:"distance",distanceKm:3,sets:1,reps:null,durationSec:null,cues:["Mix faster bursts with easy jogging","Pick a landmark to surge to","Always recover fully before the next burst"],search:"https://www.youtube.com/results?search_query=fartlek%20training%20for%20young%20runners%20beginner%20interval%20workout",video:null},
+    "race-distance-3-6km":{id:"race-distance-3-6km",name:"3.6 km Run",category:"run",type:"distance",distanceKm:3.6,sets:1,reps:null,durationSec:null,cues:["Steady, sustainable pace","Walk breaks are fine","Finish feeling strong"],search:"https://www.youtube.com/results?search_query=how%20to%20pace%20a%205k%20run%20for%20kids%20steady%20running",video:null}
+  },
+  // 7-day plan; each item references a library id. iid is set = libId at seed time.
+  planDays:[
+    {day:"mon",focus:"Football skills + ladder agility (light)",rest:false,items:[
+      {libId:"toe-to-hand-pickup",sets:3,reps:12,durationSec:null,note:""},
+      {libId:"hand-pass",sets:3,reps:15,durationSec:null,note:""},
+      {libId:"bounce",sets:3,reps:12,durationSec:null,note:""},
+      {libId:"agility-ladder-two-feet-in",sets:3,reps:2,durationSec:null,note:""},
+      {libId:"agility-ladder-lateral-in-out",sets:3,reps:2,durationSec:null,note:""}]},
+    {day:"tue",focus:"Camogie stick skills + easy jog",rest:false,items:[
+      {libId:"roll-lift",sets:3,reps:12,durationSec:null,note:""},
+      {libId:"jab-lift",sets:3,reps:12,durationSec:null,note:""},
+      {libId:"ground-strike",sets:3,reps:10,durationSec:null,note:""},
+      {libId:"striking-both-sides",sets:3,reps:8,durationSec:null,note:"Focus on clean technique both sides, not power."},
+      {libId:"easy-jog",sets:1,reps:null,durationSec:null,note:"Easy conversational pace, ~2 km."}]},
+    {day:"wed",focus:"Agility + change-of-direction (key agility day)",rest:false,items:[
+      {libId:"agility-ladder-icky-shuffle",sets:3,reps:2,durationSec:null,note:""},
+      {libId:"cone-zig-zag-cod",sets:3,reps:4,durationSec:null,note:""},
+      {libId:"deceleration-cutting-drill",sets:3,reps:4,durationSec:null,note:"Emphasise controlled stops and balanced landings."},
+      {libId:"mirror-reaction-drill",sets:3,reps:null,durationSec:20,note:""}]},
+    {day:"thu",focus:"Active recovery — rest day",rest:true,items:[]},
+    {day:"fri",focus:"Football aerial/striking + camogie touch (low impact)",rest:false,items:[
+      {libId:"high-catch",sets:3,reps:10,durationSec:null,note:""},
+      {libId:"kick-pass-both-feet",sets:4,reps:8,durationSec:null,note:""},
+      {libId:"wall-ball-control",sets:3,reps:null,durationSec:120,note:""},
+      {libId:"solo-run",sets:3,reps:null,durationSec:30,note:"Camogie balance/control; light, fun finish."}]},
+    {day:"sat",focus:"3.6 km run (goal distance) + short skill warm-up",rest:false,items:[
+      {libId:"hand-pass-off-hurley",sets:2,reps:12,durationSec:null,note:"Light skill warm-up before the run."},
+      {libId:"race-distance-3-6km",sets:1,reps:null,durationSec:null,note:"Target 3.6 km at a steady, sustainable pace. Walk breaks fine."}]},
+    {day:"sun",focus:"Power-agility (jumps + acceleration) + camogie",rest:false,items:[
+      {libId:"broad-jump-stick",sets:3,reps:4,durationSec:null,note:"Stick the landing each time before next jump."},
+      {libId:"acceleration-sprint-mechanics",sets:2,reps:4,durationSec:null,note:"Short 10-15m accelerations, full recovery between reps."},
+      {libId:"striking-on-the-run",sets:3,reps:8,durationSec:null,note:""},
+      {libId:"catching-high-ball",sets:3,reps:10,durationSec:null,note:""}]}
+  ],
+  tests:{
+    "sprint-10m":{id:"sprint-10m",name:"10m Linear Sprint",unit:"s",lowerIsBetter:true,description:"Acceleration / explosive speed off the mark.",protocol:"Mark start & finish 10m apart on a flat, non-slip surface. Staggered stance, front foot behind the line, no run-up. Self-start, sprint maximally through the line. Time from first movement to torso crossing. Best of 2-3 trials with ~2 min rest.",equipment:["2 cones","tape","stopwatch","10m+ flat surface"],search:"https://www.youtube.com/results?search_query=10m%20sprint%20test%20acceleration%20youth%20athlete%20protocol"},
+    "sprint-20m":{id:"sprint-20m",name:"20m Linear Sprint",unit:"s",lowerIsBetter:true,description:"Acceleration into maximal sprint speed.",protocol:"Start & finish 20m apart on a flat surface. Staggered stance, no run-up. Self-start, sprint all the way through the line (don't slow early). Time first movement to torso crossing. Best of 2-3 trials with 2-3 min rest.",equipment:["2 cones","tape","stopwatch","25m+ flat surface"],search:"https://www.youtube.com/results?search_query=20m%20sprint%20speed%20test%20protocol%20youth%20athlete"},
+    "pro-agility-5-10-5":{id:"pro-agility-5-10-5",name:"5-10-5 Pro-Agility Shuttle",unit:"s",lowerIsBetter:true,description:"Lateral change-of-direction, deceleration & reacceleration.",protocol:"3 cones in a line 5 yards apart. Straddle the middle cone facing forward. Sprint 5yd right, touch the line; change direction sprint 10yd left, touch; sprint 5yd back through the middle. Time first movement to finish. Run both directions, best of 2-3 each side.",equipment:["3 cones","tape","stopwatch","~10m flat surface"],search:"https://www.youtube.com/results?search_query=5-10-5%20pro%20agility%20shuttle%20test%20how%20to%20perform"},
+    "illinois-agility":{id:"illinois-agility",name:"Illinois Agility Test",unit:"s",lowerIsBetter:true,description:"Sprint, weave and turn over a 10m x 5m course.",protocol:"Mark 10m x 5m. Cone at each corner; 4 cones in a line down the centre 3.3m apart. Start face-down, hands by shoulders. On signal: sprint 10m up, back, weave through the 4 centre cones up and back, then sprint the final 10m lengths to finish. Best of 2 trials, full rest. Reset knocked cones.",equipment:["8 cones","tape","stopwatch","10m x 5m flat surface"],search:"https://www.youtube.com/results?search_query=Illinois%20agility%20test%20setup%20and%20protocol"},
+    "505-cod":{id:"505-cod",name:"505 Change-of-Direction Test",unit:"s",lowerIsBetter:true,description:"A single 180° turn — pure change-of-direction, per leg.",protocol:"Start cone, a timing line 10m on, and a turning line a further 5m on (15m total). Sprint from start; begin timing as they cross the 10m line; continue to the 15m line, plant a foot, pivot 180° and sprint back. Stop timing as they re-cross the 10m line. Test off right foot and left foot separately; best of 2 each side.",equipment:["3 cones","tape","stopwatch","15m+ flat surface"],search:"https://www.youtube.com/results?search_query=505%20agility%20change%20of%20direction%20test%20protocol"},
+    "standing-broad-jump":{id:"standing-broad-jump",name:"Standing Broad Jump",unit:"cm",lowerIsBetter:false,description:"Horizontal lower-body explosive power.",protocol:"Tape a take-off line; lay the tape measure perpendicular. Toes behind the line, feet shoulder-width. Swing arms and bend knees, jump forward as far as possible, land on both feet without falling back. Measure to the nearest body part that touches down. Best of 3 trials (cm).",equipment:["tape measure","floor tape","3m+ firm surface"],search:"https://www.youtube.com/results?search_query=standing%20broad%20jump%20test%20how%20to%20measure"},
+    "vertical-jump-reach":{id:"vertical-jump-reach",name:"Vertical Jump (Reach-and-Jump)",unit:"cm",lowerIsBetter:false,description:"Vertical lower-body explosive power.",protocol:"Stand side-on to a wall, reach as high as possible, mark the standing reach (chalk fingers or tape). From standing (counter-movement allowed, no run-up step), jump and touch the wall at the peak. Measure the gap between the two marks (cm). Best of 3, keep take-off position consistent pre/post.",equipment:["wall","tape measure","chalk/tape","step stool"],search:"https://www.youtube.com/results?search_query=vertical%20jump%20test%20wall%20reach%20and%20jump%20method"},
+    "plank-hold":{id:"plank-hold",name:"Front Plank Hold",unit:"s",lowerIsBetter:false,description:"Core / trunk muscular endurance.",protocol:"Front plank on forearms and toes: elbows under shoulders, straight line head to heels, hips level. Start the clock once correct form is held; she holds as long as she can with good form. One verbal correction allowed; stop the clock when form breaks a second time. Record hold time (s).",equipment:["stopwatch","mat or soft floor"],search:"https://www.youtube.com/results?search_query=front%20plank%20hold%20test%20proper%20form%20youth"}
+  },
+  runGuidance:[
+    "Warm up first: 5-10 min easy walking into a gentle jog, plus a few leg swings, skips and high knees. Never sprint off cold.",
+    "Pace it sensibly: start a touch slower than feels comfortable — you should be able to say a short sentence while running. Save energy for the last third.",
+    "Breathe in a relaxed rhythm (in for 2-3 steps, out for 2-3 steps). Use the belly, keep shoulders loose.",
+    "Build up gradually: no more than ~10% more running a week, and keep most runs easy. 2-3 runs a week with rest days is plenty at this age.",
+    "Cool down every time: 5 min easy jog into a walk, then gentle calf, hamstring and quad stretches.",
+    "Hydrate through the day, not just before running. Sip water beforehand, rehydrate after.",
+    "Listen to your body: sharp pain, dizziness or unusual breathlessness means stop. Tired legs are normal; pain is not.",
+    "Wear well-fitting running shoes and dress for Irish weather in light layers.",
+    "Make it fun: run with a friend or parent, mix up routes, celebrate small wins."
+  ],
+  targetTimeNote:"For a reasonably fit 12-13 year old, 3.6 km typically takes around 18-22 min (~5:00-6:00 / km). A stronger runner may be nearer 16-17 min; someone newer closer to 23-25 min. Highly individual and not a hard target — the aim is to finish feeling strong and to enjoy it.",
+  coachNotes:[
+    "Recovery is the main thing to watch: the week has one rest day (Thu) and six training days. At 12-13, especially through growth spurts, recovery is when adaptation happens. If she's tired, sore or flat, an extra easy or rest day is completely fine — the plan bends around her.",
+    "Sunday is the hardest day (jumps + sprints) and falls the day after the long run. Jumping/sprinting are best on fresh legs — consider a lighter day between the long run and the power day if it's easy to shuffle.",
+    "Footwear & surface matter most on the jumping/cutting/sprinting days (Wed & Sun). Use supportive trainers/boots with grip, and prefer grass or a forgiving surface over concrete to protect growing knees and ankles.",
+    "Always do a proper warm-up before agility, jumping, running and sprint sessions (5-10 min easy movement, skips, build-ups) and an easy cool-down after.",
+    "The 'stick the landing' and 'controlled stops' cues are key — quality of landing and change-of-direction technique matters far more than power or speed at this stage. Stop a set if form gets sloppy.",
+    "Hydration & food: water before and after sessions, and something eaten a couple of hours beforehand. Young athletes fatigue and lose technique quickly when under-fuelled.",
+    "Listen to the body over the plan. Normal soreness is fine, but persistent joint pain — especially below the kneecap or at the heel (common growth-related sore spots at this age) — means ease off, rest, and see a GP/physio if it lingers.",
+    "Overall a sensible, skill-focused week with low jumping volume and good variety across football, camogie, agility and running. Keep it flexible around school, matches, sleep and how she's feeling."
+  ]
+};
+
+/* ============================================================
+   3) INIT
+   ============================================================ */
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+const TS = firebase.database.ServerValue.TIMESTAMP;
+
+const DAYS = ["mon","tue","wed","thu","fri","sat","sun"];
+const DAY_FULL = {mon:"Monday",tue:"Tuesday",wed:"Wednesday",thu:"Thursday",fri:"Friday",sat:"Saturday",sun:"Sunday"};
+const DAY_SHORT = {mon:"Mon",tue:"Tue",wed:"Wed",thu:"Thu",fri:"Fri",sat:"Sat",sun:"Sun"};
+const CATS = {
+  football:{label:"Football",c:"--c-football"},
+  camogie:{label:"Camogie",c:"--c-camogie"},
+  agility:{label:"Agility",c:"--c-agility"},
+  run:{label:"Run",c:"--c-run"}
+};
+
+const S = {
+  code:null, me:null, coach:false,
+  view:"today",
+  selDay: todayKey(),
+  data:{ meta:null, library:{}, plan:{days:{}}, tests:{}, weeks:{}, runs:{}, results:{} },
+  sw:{ running:false, acc:0, start:0, timer:null, distance:3.6 },
+  refs:[]
+};
+
+/* ---------- tiny helpers ---------- */
+const $ = (id)=>document.getElementById(id);
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+function el(html){ const t=document.createElement("template"); t.innerHTML=html.trim(); return t.content.firstElementChild; }
+function toast(msg){ const t=$("toast"); t.querySelector(".in").textContent=msg; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),2000); }
+function catColor(cat){ return "var("+((CATS[cat]||CATS.football).c)+")"; }
+function todayKey(){ return ["sun","mon","tue","wed","thu","fri","sat"][new Date().getDay()]; }
+
+function isoWeek(d){
+  const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const dayNum=(date.getUTCDay()+6)%7;
+  date.setUTCDate(date.getUTCDate()-dayNum+3);
+  const firstThu=new Date(Date.UTC(date.getUTCFullYear(),0,4));
+  const week=1+Math.round(((date-firstThu)/86400000-3+((firstThu.getUTCDay()+6)%7))/7);
+  return date.getUTCFullYear()+"-W"+String(week).padStart(2,"0");
+}
+function weekId(d){ return isoWeek(d||new Date()); }
+function todayISO(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function fmtSecs(s){ s=Math.round(s); const m=Math.floor(s/60); const ss=s%60; return m+":"+String(ss).padStart(2,"0"); }
+function fmtClock(ms){ const t=Math.floor(ms/100); const tenths=t%10; const total=Math.floor(t/10); const m=Math.floor(total/60); const s=total%60; return m+":"+String(s).padStart(2,"0")+"."+tenths; }
+function pace(sec,km){ if(!km) return "–"; return fmtSecs(sec/km)+" /km"; }
+
+/* ============================================================
+   4) AUTH + BOOT
+   ============================================================ */
+auth.onAuthStateChanged((user)=>{
+  if(user){ S.me=user; afterAuth(); }
+  else { auth.signInAnonymously().catch(err=>{
+    $("splashSub").textContent="Can't connect — check Anonymous sign-in is on in Firebase.";
+    console.error(err);
+  }); }
+});
+
+function afterAuth(){
+  const saved = localStorage.getItem("arya_space");
+  if(saved){ S.code=saved; boot(); }
+  else { $("splash").style.display="none"; $("join").classList.add("show"); }
+}
+
+$("jGo").onclick = ()=>{
+  const name=$("jName").value.trim()||"Arya";
+  const code=$("jCode").value.trim().toLowerCase().replace(/[^a-z0-9-]/g,"-");
+  const pin=$("jPin").value.trim()||"1234";
+  if(!code){ $("jErr").textContent="Please enter a space code."; return; }
+  localStorage.setItem("arya_space",code);
+  localStorage.setItem("arya_join_name",name);
+  localStorage.setItem("arya_join_pin",pin);
+  S.code=code;
+  $("join").classList.remove("show");
+  $("splash").style.display="flex";
+  $("splashSub").textContent="Setting up…";
+  boot(true);
+};
+
+function boot(fromJoin){
+  const root = db.ref("spaces/"+S.code);
+  root.child("meta").once("value").then(snap=>{
+    if(!snap.exists()){
+      const name = (fromJoin? localStorage.getItem("arya_join_name") : null) || "Arya";
+      const pin = (fromJoin? localStorage.getItem("arya_join_pin") : null) || "1234";
+      return seedSpace(name,pin);
+    }
+  }).then(()=>{
+    attachListeners();
+  }).catch(err=>{
+    $("splashSub").textContent="Connection problem. Pull to refresh.";
+    console.error(err);
+  });
+}
+
+function seedSpace(name,pin){
+  const days={};
+  SEED.planDays.forEach(d=>{
+    days[d.day]={ focus:d.focus, rest:!!d.rest, items:(d.items||[]).map(it=>({
+      iid: it.libId, libId: it.libId, sets: it.sets, reps: (it.reps==null?null:it.reps),
+      durationSec: (it.durationSec==null?null:it.durationSec), note: it.note||""
+    }))};
+  });
+  const payload = {
+    meta:{ athleteName:name, coachPin:String(pin), createdAt:TS, seedVersion:1 },
+    library: SEED.library,
+    plan:{ days },
+    tests: SEED.tests
+  };
+  return db.ref("spaces/"+S.code).update(payload);
+}
+
+function attachListeners(){
+  S.refs.forEach(r=>r.ref.off("value",r.fn));
+  S.refs=[];
+  const root="spaces/"+S.code+"/";
+  const bind=(path,key)=>{
+    const ref=db.ref(root+path);
+    const fn=ref.on("value",snap=>{
+      const v=snap.val();
+      if(key==="plan") S.data.plan = v||{days:{}};
+      else S.data[key]= v||{};
+      if(!booted) tryEnter();
+      else if(shouldRerender(key)) render();
+    });
+    S.refs.push({ref,fn});
+  };
+  bind("meta","meta"); bind("library","library"); bind("plan","plan");
+  bind("tests","tests"); bind("weeks","weeks"); bind("runs","runs"); bind("results","results");
+}
+
+let booted=false, loadedKeys={};
+function tryEnter(){
+  // wait until the essentials have arrived
+  if(S.data.meta && S.data.library && S.data.plan){ if(!booted){ booted=true; enterApp(); } }
+}
+function shouldRerender(key){
+  if(S.view==="today") return ["plan","library","weeks","meta"].includes(key);
+  if(S.view==="run") return ["runs","meta"].includes(key);
+  if(S.view==="tests") return ["tests","results"].includes(key);
+  if(S.view==="progress") return ["plan","weeks","runs","results","tests","meta"].includes(key);
+  if(S.view==="coach") return ["plan","library","tests","meta"].includes(key);
+  return true;
+}
+
+function enterApp(){
+  $("splash").style.display="none";
+  $("join").classList.remove("show");
+  $("app").style.display="block";
+  headerNames();
+  render();
+}
+function headerNames(){
+  const nm=(S.data.meta&&S.data.meta.athleteName)||"Arya";
+  $("hTitle").textContent = nm+"'s Playbook";
+}
+
+/* ---------- nav ---------- */
+document.querySelectorAll("nav.tabs button").forEach(b=>{
+  b.onclick=()=>switchView(b.dataset.v);
+});
+function switchView(v){
+  if(v==="coach" && !S.coach){ promptPin(); return; }
+  S.view=v; S.selDay = (v==="today")? S.selDay : S.selDay;
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("active",b.dataset.v===v));
+  window.scrollTo(0,0);
+  render();
+}
+
+/* ============================================================
+   5) RENDER DISPATCH
+   ============================================================ */
+function render(){
+  headerNames();
+  const m=$("main");
+  const viewName={today:"This week",run:"Running",tests:"Baseline tests",progress:"Progress",coach:"Coach mode"};
+  $("hView").textContent=viewName[S.view]||"";
+  if(S.view==="today") renderToday(m);
+  else if(S.view==="run") renderRun(m);
+  else if(S.view==="tests") renderTests(m);
+  else if(S.view==="progress") renderProgress(m);
+  else if(S.view==="coach") renderCoach(m);
+}
+
+/* ---------- TODAY ---------- */
+function dayItems(day){
+  const d=(S.data.plan.days||{})[day];
+  return (d&&d.items)? (Array.isArray(d.items)? d.items : Object.values(d.items)) : [];
+}
+function weekDone(){ return ((S.data.weeks||{})[weekId()]||{}).done||{}; }
+function isSetDone(day,iid,idx){ const dd=weekDone()[day]; return !!(dd&&dd[iid]&&dd[iid][idx]); }
+function dayProgress(day){
+  const items=dayItems(day); let total=0,done=0;
+  items.forEach(it=>{ const n=it.sets||1; total+=n; for(let i=0;i<n;i++) if(isSetDone(day,it.iid,i)) done++; });
+  return {total,done};
+}
+
+function renderToday(m){
+  m.innerHTML="";
+  // day chips
+  const days=el('<div class="days"></div>');
+  DAYS.forEach(dk=>{
+    const p=dayProgress(dk);
+    const isToday=dk===todayKey();
+    const chip=el(`<button class="day-chip ${dk===S.selDay?'sel':''} ${isToday?'today':''}">
+      <div class="dn">${DAY_SHORT[dk]}</div>
+      <div class="dd">${p.total? (p.done+"/"+p.total) : "—"}</div>
+      ${p.total&&p.done===p.total?'<div class="dot"></div>':''}
+    </button>`);
+    chip.onclick=()=>{ S.selDay=dk; renderToday(m); };
+    days.appendChild(chip);
+  });
+  m.appendChild(days);
+
+  const day=S.selDay;
+  const dObj=(S.data.plan.days||{})[day]||{};
+  const items=dayItems(day);
+  const p=dayProgress(day);
+  const pct=p.total? Math.round(p.done/p.total*100):0;
+
+  const head=el(`<div class="card"><div class="day-head">
+      <div class="ring" style="--p:${pct}"><i>${pct}%</i></div>
+      <div><h2>${DAY_FULL[day]}</h2><div class="fx">${esc(dObj.focus||"")}</div></div>
+    </div></div>`);
+  m.appendChild(head);
+
+  if(dObj.rest || items.length===0){
+    m.appendChild(el(`<div class="card" style="text-align:center">
+      <div style="font-size:34px">🌙</div>
+      <div style="font-weight:800;margin-top:6px">Rest / recovery day</div>
+      <div class="mini" style="margin-top:4px">Light stretching, hydrate, sleep well. Recovery is when you get stronger.</div>
+    </div>`));
+    return;
+  }
+
+  items.forEach(it=>{
+    const lib=(S.data.library||{})[it.libId]||{};
+    const cat=lib.category||"football";
+    const name=lib.name||it.libId;
+    const cues=lib.cues||[];
+    const meta=itemMetaStr(it,lib);
+    const card=el(`<div class="card item">
+      <div class="top">
+        <span class="pill" style="background:${catColor(cat)};color:#06210f">${(CATS[cat]||{}).label||cat}</span>
+        <button class="watch"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Watch</button>
+      </div>
+      <div class="name">${esc(name)}</div>
+      <div class="meta">${meta}</div>
+      ${it.note?`<div class="note">💡 ${esc(it.note)}</div>`:""}
+      <div class="sets"></div>
+      ${cues.length?`<details class="cues"><summary>Coaching cues</summary><ul>${cues.map(c=>`<li>${esc(c)}</li>`).join("")}</ul></details>`:""}
+    </div>`);
+    card.querySelector(".watch").onclick=()=>window.open(lib.video||lib.search||"https://www.youtube.com","_blank");
+
+    const setsWrap=card.querySelector(".sets");
+    if(cat==="run"){
+      const done=isSetDone(day,it.iid,0);
+      const go=el(`<button class="btn sm sec" style="height:42px">▶ Time this run</button>`);
+      go.onclick=()=>{ S.sw.distance=lib.distanceKm||3.6; switchView("run"); };
+      setsWrap.appendChild(go);
+      const ck=el(`<button class="set ${done?'done':''}" style="min-width:120px">${done?'✓ Done':'Mark done'}</button>`);
+      ck.onclick=()=>toggleSet(day,it.iid,0);
+      setsWrap.appendChild(ck);
+    } else {
+      const n=it.sets||1;
+      for(let i=0;i<n;i++){
+        const done=isSetDone(day,it.iid,i);
+        const b=el(`<button class="set ${done?'done':''}">${done?'<svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg>':("Set "+(i+1))}</button>`);
+        b.onclick=()=>toggleSet(day,it.iid,i);
+        setsWrap.appendChild(b);
+      }
+    }
+    m.appendChild(card);
+  });
+}
+
+function itemMetaStr(it,lib){
+  const type=lib.type||"reps";
+  if(type==="distance"){ return (lib.distanceKm||"?")+" km"; }
+  const sets=it.sets||1;
+  if(type==="time"){ const d=it.durationSec||lib.durationSec||0; const ds = d>=60? (Math.floor(d/60)+(d%60?":"+String(d%60).padStart(2,"0"):" min")) : d+"s"; return sets+" × "+ds; }
+  return sets+" sets × "+(it.reps||lib.reps||"?")+" reps";
+}
+
+function toggleSet(day,iid,idx){
+  const ref=db.ref("spaces/"+S.code+"/weeks/"+weekId()+"/done/"+day+"/"+iid+"/"+idx);
+  const cur=isSetDone(day,iid,idx);
+  ref.set(cur?null:true);
+  if(navigator.vibrate) navigator.vibrate(cur?8:18);
+}
+
+/* ---------- RUN ---------- */
+function renderRun(m){
+  m.innerHTML="";
+  // stopwatch card
+  const sw=el(`<div class="card sw">
+    <div class="time" id="swTime">0:00.0</div>
+    <div class="dist">Distance: <span id="swDist">${S.sw.distance}</span> km</div>
+    <div class="distset">Set distance: <input id="swDistIn" type="number" step="0.1" min="0.1" value="${S.sw.distance}" /> km</div>
+    <div class="row" id="swRow"></div>
+  </div>`);
+  m.appendChild(sw);
+  $("swDistIn").onchange=(e)=>{ const v=parseFloat(e.target.value); if(v>0){ S.sw.distance=v; $("swDist").textContent=v; } };
+  drawSwButtons();
+  updateSwDisplay();
+
+  // recent runs + chart
+  const runs=Object.entries(S.data.runs||{}).map(([id,r])=>({id,...r})).sort((a,b)=>(a.dateISO<b.dateISO?1:-1));
+  m.appendChild(el(`<div class="section-h"><h2>3.6 km progress</h2><div class="line"></div></div>`));
+  const goalRuns=runs.filter(r=>r.distanceKm>=3.5&&r.distanceKm<=3.7).slice().reverse();
+  if(goalRuns.length){
+    const best=Math.min(...goalRuns.map(r=>r.timeSec));
+    const bestR=goalRuns.find(r=>r.timeSec===best);
+    m.appendChild(el(`<div class="stats" style="margin-bottom:12px">
+      <div class="stat"><div class="v">${fmtSecs(best)}</div><div class="l">Best 3.6k</div></div>
+      <div class="stat"><div class="v">${pace(best,3.6).replace(' /km','')}</div><div class="l">Best pace /km</div></div>
+      <div class="stat"><div class="v">${goalRuns.length}</div><div class="l">3.6k runs</div></div>
+    </div>`));
+    m.appendChild(el(`<div class="card">${lineChartSVG(goalRuns.map(r=>({label:shortDate(r.dateISO),value:r.timeSec})),{fmt:fmtSecs,lowerIsBetter:true})}
+      <div class="mini" style="text-align:center;margin-top:6px">Run time (lower is faster)</div></div>`));
+  } else {
+    m.appendChild(el(`<div class="card empty">No 3.6 km runs logged yet. Time one above to start tracking. 🏃‍♀️</div>`));
+  }
+
+  // all runs list
+  m.appendChild(el(`<div class="section-h"><h2>Run log</h2><div class="line"></div></div>`));
+  if(!runs.length){ m.appendChild(el(`<div class="card empty">Logged runs will appear here.</div>`)); }
+  else {
+    const card=el(`<div class="card"></div>`);
+    runs.forEach(r=>{
+      const row=el(`<div class="row-item">
+        <div class="ri-main"><div class="ri-t">${r.distanceKm} km ${r.completed?'':'<span class="mini">(partial)</span>'}</div>
+          <div class="ri-s">${esc(longDate(r.dateISO))} · ${pace(r.timeSec,r.distanceKm)}${r.notes?(" · "+esc(r.notes)):""}</div></div>
+        <div class="ri-v">${fmtSecs(r.timeSec)}<small>time</small></div>
+        <button class="iconbtn del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 7h14M9 7V5h6v2M7 7l1 13h8l1-13"/></svg></button>
+      </div>`);
+      row.querySelector(".del").onclick=()=>{ if(confirm("Delete this run?")) db.ref("spaces/"+S.code+"/runs/"+r.id).remove(); };
+      card.appendChild(row);
+    });
+    m.appendChild(card);
+  }
+
+  // coach running tips
+  m.appendChild(el(`<div class="section-h"><h2>Running tips</h2><div class="line"></div></div>`));
+  const tips=el(`<div class="card"><details class="cues" open><summary>How to run the 3.6 km well</summary>
+    <ul>${SEED.runGuidance.map(g=>`<li>${esc(g)}</li>`).join("")}</ul>
+    <div class="note" style="margin-top:8px">🎯 ${esc(SEED.targetTimeNote)}</div></details></div>`);
+  m.appendChild(tips);
+}
+
+function drawSwButtons(){
+  const row=$("swRow"); row.innerHTML="";
+  if(!S.sw.running){
+    const start=el(`<button class="btn">${S.sw.acc>0?'Resume':'Start'}</button>`);
+    start.onclick=swStart; row.appendChild(start);
+    if(S.sw.acc>0){
+      const log=el(`<button class="btn sec">Finish & log</button>`); log.onclick=swFinish; row.appendChild(log);
+      const reset=el(`<button class="btn ghost">Reset</button>`); reset.onclick=swReset; row.appendChild(reset);
+    } else {
+      const man=el(`<button class="btn sec">Enter time</button>`); man.onclick=logRunManual; row.appendChild(man);
+    }
+  } else {
+    const stop=el(`<button class="btn" style="background:var(--gold);color:#3a2800">Pause</button>`);
+    stop.onclick=swStop; row.appendChild(stop);
+    const log=el(`<button class="btn sec">Finish & log</button>`); log.onclick=swFinish; row.appendChild(log);
+  }
+}
+function swStart(){ S.sw.running=true; S.sw.start=Date.now()-S.sw.acc; S.sw.timer=setInterval(updateSwDisplay,90); drawSwButtons(); }
+function swStop(){ S.sw.running=false; S.sw.acc=Date.now()-S.sw.start; clearInterval(S.sw.timer); drawSwButtons(); updateSwDisplay(); }
+function swReset(){ S.sw.running=false; S.sw.acc=0; clearInterval(S.sw.timer); drawSwButtons(); updateSwDisplay(); }
+function updateSwDisplay(){ const ms=S.sw.running?(Date.now()-S.sw.start):S.sw.acc; const t=$("swTime"); if(t) t.textContent=fmtClock(ms); }
+function swFinish(){
+  const ms = S.sw.running?(Date.now()-S.sw.start):S.sw.acc;
+  if(ms<1000){ toast("Run is too short to log"); return; }
+  S.sw.running=false; clearInterval(S.sw.timer);
+  logRun(S.sw.distance, ms/1000, ()=>{ S.sw.acc=0; });
+}
+function logRunManual(){
+  openForm("Log a run",[
+    {key:"distanceKm",label:"Distance (km)",type:"number",value:S.sw.distance,step:"0.1"},
+    {key:"mins",label:"Minutes",type:"number",value:18},
+    {key:"secs",label:"Seconds",type:"number",value:0},
+    {key:"dateISO",label:"Date",type:"date",value:todayISO()},
+    {key:"notes",label:"Notes (optional)",type:"text",value:""}
+  ],(v)=>{
+    const sec=(parseInt(v.mins||0)*60)+parseInt(v.secs||0);
+    if(sec<=0){ toast("Enter a time"); return false; }
+    db.ref("spaces/"+S.code+"/runs").push({ distanceKm:parseFloat(v.distanceKm)||S.sw.distance, timeSec:sec, completed:true, dateISO:v.dateISO||todayISO(), notes:v.notes||"", createdAt:TS });
+    toast("Run logged 🏃‍♀️");
+  });
+}
+function logRun(distance,timeSec,after){
+  openForm("Finish run",[
+    {key:"distanceKm",label:"Distance (km)",type:"number",value:distance,step:"0.1"},
+    {key:"timeStr",label:"Time",type:"static",value:fmtSecs(timeSec)},
+    {key:"completed",label:"Completed the full distance",type:"check",value:true},
+    {key:"notes",label:"How did it feel? (optional)",type:"text",value:""}
+  ],(v)=>{
+    db.ref("spaces/"+S.code+"/runs").push({ distanceKm:parseFloat(v.distanceKm)||distance, timeSec:Math.round(timeSec), completed:!!v.completed, dateISO:todayISO(), notes:v.notes||"", createdAt:TS });
+    if(after) after();
+    drawSwButtons(); updateSwDisplay();
+    toast("Run logged 🏃‍♀️");
+  });
+}
+
+/* ---------- TESTS ---------- */
+function testResults(testId){
+  return Object.entries(S.data.results||{}).map(([id,r])=>({id,...r}))
+    .filter(r=>r.testId===testId).sort((a,b)=>(a.dateISO<b.dateISO?-1:1));
+}
+function renderTests(m){
+  m.innerHTML="";
+  m.appendChild(el(`<div class="card" style="background:var(--card2)">
+    <div style="font-weight:800;margin-bottom:4px">Pre / post baseline testing</div>
+    <div class="mini">Record a <b>Pre</b> score for each test now, train the block, then a <b>Post</b> score to see the improvement. Run each test the same way both times.</div>
+  </div>`));
+
+  const tests=Object.values(S.data.tests||{});
+  if(!tests.length){ m.appendChild(el(`<div class="card empty">No tests yet — add them in Coach mode.</div>`)); return; }
+
+  tests.forEach(t=>{
+    const res=testResults(t.id);
+    const pre=res.find(r=>r.phase==="pre");
+    const last=res.length?res[res.length-1]:null;
+    let impHtml="";
+    if(pre&&last&&last!==pre){
+      const diff=last.value-pre.value;
+      const better = t.lowerIsBetter? diff<0 : diff>0;
+      const arrow = better?"▲":"▼";
+      impHtml=`<span class="badge ${better?'imp-up':'imp-down'}">${arrow} ${Math.abs(diff).toFixed( t.unit==='cm'?0:2 )}${t.unit} ${better?'better':'down'}</span>`;
+    }
+    const card=el(`<div class="card">
+      <div class="top" style="display:flex;align-items:center;gap:8px">
+        <span class="pill" style="background:var(--c-agility);color:#1a1033">${esc(t.unit)} · ${t.lowerIsBetter?'lower better':'higher better'}</span>
+        <button class="watch"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>How to</button>
+      </div>
+      <div class="name" style="margin-top:8px">${esc(t.name)}</div>
+      <div class="mini" style="margin-top:2px">${esc(t.description||"")}</div>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:12px;flex-wrap:wrap">
+        <div><div class="ri-v" style="text-align:left;font-size:20px">${pre?pre.value+t.unit:"—"}</div><div class="mini">Pre</div></div>
+        <div style="color:var(--muted2)">→</div>
+        <div><div class="ri-v" style="text-align:left;font-size:20px">${last&&last!==pre?last.value+t.unit:"—"}</div><div class="mini">Latest</div></div>
+        <div style="margin-left:auto">${impHtml}</div>
+      </div>
+      <div class="sets" style="margin-top:12px">
+        <button class="btn sm rec">+ Record result</button>
+        ${res.length?`<button class="btn sm ghost hist">History (${res.length})</button>`:""}
+      </div>
+      <details class="cues"><summary>How to run this test</summary><div class="mini" style="margin-top:8px;color:var(--text)">${esc(t.protocol||"")}</div>
+        ${t.equipment&&t.equipment.length?`<div class="mini" style="margin-top:8px">Gear: ${t.equipment.map(esc).join(", ")}</div>`:""}</details>
+    </div>`);
+    card.querySelector(".watch").onclick=()=>window.open(t.video||t.search||"https://www.youtube.com","_blank");
+    card.querySelector(".rec").onclick=()=>recordTest(t);
+    const h=card.querySelector(".hist"); if(h) h.onclick=()=>showTestHistory(t,res);
+    // mini trend
+    if(res.length>=2){
+      card.appendChild(el(`<div style="margin-top:10px">${lineChartSVG(res.map(r=>({label:shortDate(r.dateISO),value:r.value})),{fmt:(v)=>v+t.unit,lowerIsBetter:t.lowerIsBetter})}</div>`));
+    }
+    m.appendChild(card);
+  });
+}
+function recordTest(t){
+  openForm("Record: "+t.name,[
+    {key:"value",label:"Result ("+t.unit+")",type:"number",value:"",step:"0.01"},
+    {key:"phase",label:"Phase",type:"select",value:"pre",options:[["pre","Pre (baseline)"],["mid","Check-in"],["post","Post (re-test)"]]},
+    {key:"dateISO",label:"Date",type:"date",value:todayISO()},
+    {key:"notes",label:"Notes (optional)",type:"text",value:""}
+  ],(v)=>{
+    const val=parseFloat(v.value); if(isNaN(val)){ toast("Enter a number"); return false; }
+    db.ref("spaces/"+S.code+"/results").push({ testId:t.id, value:val, phase:v.phase, dateISO:v.dateISO||todayISO(), notes:v.notes||"", createdAt:TS });
+    toast("Saved ✓");
+  });
+}
+function showTestHistory(t,res){
+  const rows=res.slice().reverse().map(r=>`<div class="row-item">
+    <div class="ri-main"><div class="ri-t">${r.value}${t.unit} <span class="pill" style="background:var(--card2);font-size:10px;padding:2px 7px">${r.phase}</span></div>
+    <div class="ri-s">${esc(longDate(r.dateISO))}${r.notes?(" · "+esc(r.notes)):""}</div></div>
+    <button class="iconbtn del" data-id="${r.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 7h14M9 7V5h6v2M7 7l1 13h8l1-13"/></svg></button>
+  </div>`).join("");
+  openModalHTML(`<h3>${esc(t.name)} — history</h3>${rows||'<div class="empty">No results.</div>'}<div class="m-actions"><button class="btn sec" onclick="closeModal()">Close</button></div>`);
+  $("mbox").querySelectorAll(".del").forEach(b=>b.onclick=()=>{ if(confirm("Delete this result?")){ db.ref("spaces/"+S.code+"/results/"+b.dataset.id).remove(); closeModal(); } });
+}
+
+/* ---------- PROGRESS ---------- */
+function renderProgress(m){
+  m.innerHTML="";
+  // this week
+  const items=DAYS.reduce((a,dk)=>a+dayItems(dk).reduce((s,it)=>s+(it.sets||1),0),0);
+  let done=0,daysTrained=0;
+  DAYS.forEach(dk=>{ const p=dayProgress(dk); done+=p.done; if(p.done>0) daysTrained++; });
+  const pct=items?Math.round(done/items*100):0;
+  m.appendChild(el(`<div class="section-h"><h2>This week</h2><div class="line"></div></div>`));
+  m.appendChild(el(`<div class="stats">
+    <div class="stat"><div class="v">${pct}%</div><div class="l">Plan done</div></div>
+    <div class="stat"><div class="v">${done}/${items}</div><div class="l">Sets done</div></div>
+    <div class="stat"><div class="v">${daysTrained}</div><div class="l">Days trained</div></div>
+  </div>`));
+
+  // weekly completion trend
+  const weeklyPts=lastWeeksCompletion(8);
+  if(weeklyPts.some(p=>p.value>0)){
+    m.appendChild(el(`<div class="section-h"><h2>Weekly completion</h2><div class="line"></div></div>`));
+    m.appendChild(el(`<div class="card">${lineChartSVG(weeklyPts.map(p=>({label:p.label,value:p.value})),{fmt:(v)=>v+"%",lowerIsBetter:false,max:100,min:0})}</div>`));
+  }
+
+  // run trend
+  const goalRuns=Object.values(S.data.runs||{}).filter(r=>r.distanceKm>=3.5&&r.distanceKm<=3.7).sort((a,b)=>(a.dateISO<b.dateISO?-1:1));
+  m.appendChild(el(`<div class="section-h"><h2>3.6 km run</h2><div class="line"></div></div>`));
+  if(goalRuns.length>=2){
+    const first=goalRuns[0].timeSec, last=goalRuns[goalRuns.length-1].timeSec, best=Math.min(...goalRuns.map(r=>r.timeSec));
+    const imp=first-last;
+    m.appendChild(el(`<div class="card">${lineChartSVG(goalRuns.map(r=>({label:shortDate(r.dateISO),value:r.timeSec})),{fmt:fmtSecs,lowerIsBetter:true})}
+      <div class="mini" style="text-align:center;margin-top:6px">Best ${fmtSecs(best)} · ${imp>0?("improved "+fmtSecs(Math.abs(imp))+" since first run 🎉"):imp<0?("up "+fmtSecs(Math.abs(imp))+" vs first"):"same as first"}</div></div>`));
+  } else { m.appendChild(el(`<div class="card empty">Log a couple of 3.6 km runs to see your trend.</div>`)); }
+
+  // test improvements
+  const tests=Object.values(S.data.tests||{});
+  const withRes=tests.map(t=>({t,res:testResults(t.id)})).filter(x=>x.res.length>=1);
+  m.appendChild(el(`<div class="section-h"><h2>Baseline tests</h2><div class="line"></div></div>`));
+  if(!withRes.length){ m.appendChild(el(`<div class="card empty">Record baseline test results to track athletic progress.</div>`)); }
+  else {
+    const card=el(`<div class="card"></div>`);
+    withRes.forEach(({t,res})=>{
+      const pre=res.find(r=>r.phase==="pre")||res[0];
+      const last=res[res.length-1];
+      let badge="";
+      if(pre&&last&&last!==pre){
+        const diff=last.value-pre.value; const better=t.lowerIsBetter?diff<0:diff>0;
+        badge=`<span class="badge ${better?'imp-up':'imp-down'}">${better?'▲':'▼'} ${Math.abs(diff).toFixed(t.unit==='cm'?0:2)}${t.unit}</span>`;
+      } else badge=`<span class="mini">1 result</span>`;
+      card.appendChild(el(`<div class="row-item"><div class="ri-main"><div class="ri-t">${esc(t.name)}</div>
+        <div class="ri-s">${pre?(pre.value+t.unit+" → "+last.value+t.unit):(last.value+t.unit)}</div></div>${badge}</div>`));
+    });
+    m.appendChild(card);
+  }
+
+  // coach & safety notes
+  m.appendChild(el(`<div class="section-h"><h2>Coach &amp; safety notes</h2><div class="line"></div></div>`));
+  m.appendChild(el(`<div class="card"><ul class="note-list" style="margin:0;padding-left:18px">${SEED.coachNotes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul></div>`));
+}
+
+function lastWeeksCompletion(n){
+  const out=[];
+  const now=new Date();
+  for(let i=n-1;i>=0;i--){
+    const d=new Date(now); d.setDate(now.getDate()-i*7);
+    const wid=isoWeek(d);
+    const wd=((S.data.weeks||{})[wid]||{}).done||{};
+    // total planned for the (current) plan
+    let total=0,done=0;
+    DAYS.forEach(dk=>{ dayItems(dk).forEach(it=>{ const ns=it.sets||1; total+=ns; const dd=wd[dk]&&wd[dk][it.iid]; if(dd){ for(let k=0;k<ns;k++) if(dd[k]) done++; } }); });
+    out.push({label:wid.split("-W")[1]?("W"+wid.split("-W")[1]):wid, value: total?Math.round(done/total*100):0});
+  }
+  return out;
+}
+
+/* ---------- COACH ---------- */
+function promptPin(){
+  openForm("Coach mode",[{key:"pin",label:"Enter coach PIN",type:"password",value:""}],(v)=>{
+    const real=(S.data.meta&&S.data.meta.coachPin)||"1234";
+    if(String(v.pin)===String(real)){ S.coach=true; switchView("coach"); }
+    else { toast("Wrong PIN"); return false; }
+  });
+}
+function renderCoach(m){
+  m.innerHTML="";
+  // athlete & space
+  m.appendChild(el(`<div class="section-h"><h2>Setup</h2><div class="line"></div></div>`));
+  const meta=S.data.meta||{};
+  const setup=el(`<div class="card coach-sec">
+    <div class="lib-row"><div class="lr-main"><div class="lr-t">Athlete name</div><div class="lr-s">${esc(meta.athleteName||"Arya")}</div></div><button class="btn sm sec" id="cName">Edit</button></div>
+    <div class="lib-row"><div class="lr-main"><div class="lr-t">Space code</div><div class="lr-s">${esc(S.code)} — same code on both phones</div></div><button class="btn sm sec" id="cCopy">Copy</button></div>
+    <div class="lib-row"><div class="lr-main"><div class="lr-t">Coach PIN</div><div class="lr-s">••••</div></div><button class="btn sm sec" id="cPin">Change</button></div>
+  </div>`);
+  m.appendChild(setup);
+  $("cName").onclick=()=>openForm("Athlete name",[{key:"name",label:"Name",type:"text",value:meta.athleteName||"Arya"}],(v)=>{ db.ref("spaces/"+S.code+"/meta/athleteName").set(v.name||"Arya"); toast("Saved"); });
+  $("cCopy").onclick=()=>{ navigator.clipboard&&navigator.clipboard.writeText(S.code); toast("Code copied"); };
+  $("cPin").onclick=()=>openForm("Change coach PIN",[{key:"pin",label:"New PIN",type:"text",value:""}],(v)=>{ if(!v.pin){toast("Enter a PIN");return false;} db.ref("spaces/"+S.code+"/meta/coachPin").set(String(v.pin)); toast("PIN updated"); });
+
+  // weekly plan editor
+  m.appendChild(el(`<div class="section-h"><h2>Week plan</h2><div class="line"></div></div>`));
+  DAYS.forEach(dk=>{
+    const dObj=(S.data.plan.days||{})[dk]||{focus:"",items:[],rest:false};
+    const items=dayItems(dk);
+    const dayCard=el(`<div class="card coach-day">
+      <div class="cd-h"><b>${DAY_FULL[dk]}</b> <span class="fx">${esc(dObj.focus||"")}</span>
+        <button class="iconbtn editfocus" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4L20 8l-4-4L4 16z"/></svg></button></div>
+    </div>`);
+    dayCard.querySelector(".editfocus").onclick=()=>openForm(DAY_FULL[dk]+" focus",[
+      {key:"focus",label:"Focus / label",type:"text",value:dObj.focus||""},
+      {key:"rest",label:"Rest day",type:"check",value:!!dObj.rest}
+    ],(v)=>{ db.ref("spaces/"+S.code+"/plan/days/"+dk).update({focus:v.focus||"",rest:!!v.rest}); toast("Saved"); });
+
+    items.forEach((it,idx)=>{
+      const lib=(S.data.library||{})[it.libId]||{};
+      const row=el(`<div class="lib-row"><div class="lr-main"><div class="lr-t">${esc(lib.name||it.libId)}</div><div class="lr-s">${itemMetaStr(it,lib)}</div></div>
+        <div class="row-actions">
+          <button class="iconbtn ed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4L20 8l-4-4L4 16z"/></svg></button>
+          <button class="iconbtn rm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg></button>
+        </div></div>`);
+      row.querySelector(".ed").onclick=()=>editPlanItem(dk,idx,it,lib);
+      row.querySelector(".rm").onclick=()=>{ const arr=items.slice(); arr.splice(idx,1); db.ref("spaces/"+S.code+"/plan/days/"+dk+"/items").set(arr); toast("Removed"); };
+      dayCard.appendChild(row);
+    });
+    const add=el(`<button class="btn sm sec" style="margin-top:10px">+ Add skill to ${DAY_SHORT[dk]}</button>`);
+    add.onclick=()=>addItemToDay(dk);
+    dayCard.appendChild(add);
+    m.appendChild(dayCard);
+  });
+
+  // library editor
+  m.appendChild(el(`<div class="section-h"><h2>Skills library</h2><div class="line"></div></div>`));
+  const addLib=el(`<button class="btn sm" style="margin-bottom:10px">+ Add new skill</button>`);
+  addLib.onclick=()=>editLibraryItem(null);
+  m.appendChild(addLib);
+  ["football","camogie","agility","run"].forEach(cat=>{
+    const list=Object.values(S.data.library||{}).filter(l=>l.category===cat);
+    if(!list.length) return;
+    const c=el(`<div class="card"><div style="font-weight:800;color:${catColor(cat)};margin-bottom:4px">${(CATS[cat]||{}).label||cat}</div></div>`);
+    list.forEach(l=>{
+      const row=el(`<div class="lib-row"><div class="lr-main"><div class="lr-t">${esc(l.name)}</div><div class="lr-s">${l.video?'🔗 video set':'🔎 search link'}</div></div>
+        <div class="row-actions">
+          <button class="iconbtn ed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4L20 8l-4-4L4 16z"/></svg></button>
+          <button class="iconbtn del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 7h14M9 7V5h6v2M7 7l1 13h8l1-13"/></svg></button>
+        </div></div>`);
+      row.querySelector(".ed").onclick=()=>editLibraryItem(l);
+      row.querySelector(".del").onclick=()=>{ if(confirm("Delete '"+l.name+"' from the library?")) db.ref("spaces/"+S.code+"/library/"+l.id).remove(); };
+      c.appendChild(row);
+    });
+    m.appendChild(c);
+  });
+
+  // tests editor
+  m.appendChild(el(`<div class="section-h"><h2>Baseline tests</h2><div class="line"></div></div>`));
+  const addTest=el(`<button class="btn sm" style="margin-bottom:10px">+ Add test</button>`);
+  addTest.onclick=()=>editTest(null);
+  m.appendChild(addTest);
+  const tcard=el(`<div class="card"></div>`);
+  Object.values(S.data.tests||{}).forEach(t=>{
+    const row=el(`<div class="lib-row"><div class="lr-main"><div class="lr-t">${esc(t.name)}</div><div class="lr-s">${esc(t.unit)} · ${t.lowerIsBetter?'lower better':'higher better'}</div></div>
+      <div class="row-actions">
+        <button class="iconbtn ed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4L20 8l-4-4L4 16z"/></svg></button>
+        <button class="iconbtn del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 7h14M9 7V5h6v2M7 7l1 13h8l1-13"/></svg></button>
+      </div></div>`);
+    row.querySelector(".ed").onclick=()=>editTest(t);
+    row.querySelector(".del").onclick=()=>{ if(confirm("Delete test '"+t.name+"'?")) db.ref("spaces/"+S.code+"/tests/"+t.id).remove(); };
+    tcard.appendChild(row);
+  });
+  m.appendChild(tcard);
+
+  // data
+  m.appendChild(el(`<div class="section-h"><h2>Data</h2><div class="line"></div></div>`));
+  const dataCard=el(`<div class="card">
+    <button class="btn sm sec full" id="cExport" style="margin-bottom:8px">⬇ Export backup (JSON)</button>
+    <button class="btn sm sec full" id="cImport" style="margin-bottom:8px">⬆ Import backup</button>
+    <button class="btn sm ghost full" id="cReseed" style="margin-bottom:8px">↺ Re-seed default plan & skills</button>
+    <button class="btn sm danger full" id="cLeave">Sign out of this space on this device</button>
+  </div>`);
+  m.appendChild(dataCard);
+  $("cExport").onclick=exportData;
+  $("cImport").onclick=importData;
+  $("cReseed").onclick=()=>{ if(confirm("Restore the original plan, skills library and tests? Your logged runs, results and check-offs are kept.")){ const name=(S.data.meta&&S.data.meta.athleteName)||"Arya"; const pin=(S.data.meta&&S.data.meta.coachPin)||"1234"; seedSpace(name,pin).then(()=>toast("Defaults restored")); } };
+  $("cLeave").onclick=()=>{ if(confirm("Sign out on this device? You'll re-enter the space code to return.")){ localStorage.removeItem("arya_space"); location.reload(); } };
+}
+
+function editPlanItem(day,idx,it,lib){
+  const type=lib.type||"reps";
+  const fields=[{key:"sets",label:"Sets",type:"number",value:it.sets||1}];
+  if(type==="reps") fields.push({key:"reps",label:"Reps per set",type:"number",value:it.reps||lib.reps||10});
+  if(type==="time") fields.push({key:"durationSec",label:"Duration (seconds)",type:"number",value:it.durationSec||lib.durationSec||30});
+  fields.push({key:"note",label:"Note (optional)",type:"text",value:it.note||""});
+  openForm("Edit: "+(lib.name||it.libId),fields,(v)=>{
+    const items=dayItems(day).slice();
+    items[idx]={ ...it, sets:parseInt(v.sets)||1, reps: type==="reps"?(parseInt(v.reps)||null):null, durationSec: type==="time"?(parseInt(v.durationSec)||null):null, note:v.note||"" };
+    db.ref("spaces/"+S.code+"/plan/days/"+day+"/items").set(items); toast("Saved");
+  });
+}
+function addItemToDay(day){
+  const libs=Object.values(S.data.library||{});
+  const opts=libs.map(l=>[l.id,(CATS[l.category]||{}).label+" · "+l.name]);
+  openForm("Add skill to "+DAY_FULL[day],[
+    {key:"libId",label:"Skill",type:"select",value:opts[0]&&opts[0][0],options:opts},
+    {key:"sets",label:"Sets",type:"number",value:3},
+    {key:"reps",label:"Reps (leave blank for time/distance skills)",type:"number",value:""},
+    {key:"durationSec",label:"Duration sec (for time skills)",type:"number",value:""},
+    {key:"note",label:"Note (optional)",type:"text",value:""}
+  ],(v)=>{
+    const lib=(S.data.library||{})[v.libId]; if(!lib){toast("Pick a skill");return false;}
+    const items=dayItems(day).slice();
+    items.push({ iid:v.libId, libId:v.libId, sets:parseInt(v.sets)||1,
+      reps: v.reps!==""?parseInt(v.reps):(lib.reps||null),
+      durationSec: v.durationSec!==""?parseInt(v.durationSec):(lib.durationSec||null), note:v.note||"" });
+    // ensure not rest
+    db.ref("spaces/"+S.code+"/plan/days/"+day).update({rest:false});
+    db.ref("spaces/"+S.code+"/plan/days/"+day+"/items").set(items); toast("Added");
+  });
+}
+function editLibraryItem(l){
+  const isNew=!l;
+  l=l||{category:"football",type:"reps",sets:3,reps:10,durationSec:null,cues:[],search:"",video:null};
+  openForm(isNew?"New skill":"Edit skill",[
+    {key:"name",label:"Name",type:"text",value:l.name||""},
+    {key:"category",label:"Category",type:"select",value:l.category,options:[["football","Football"],["camogie","Camogie"],["agility","Agility"],["run","Run"]]},
+    {key:"type",label:"Measured by",type:"select",value:l.type,options:[["reps","Reps"],["time","Time (seconds)"],["distance","Distance (km)"]]},
+    {key:"sets",label:"Default sets",type:"number",value:l.sets||1},
+    {key:"reps",label:"Default reps (reps type)",type:"number",value:l.reps||""},
+    {key:"durationSec",label:"Default seconds (time type)",type:"number",value:l.durationSec||""},
+    {key:"distanceKm",label:"Distance km (distance type)",type:"number",value:l.distanceKm||"",step:"0.1"},
+    {key:"cues",label:"Coaching cues (one per line)",type:"textarea",value:(l.cues||[]).join("\n")},
+    {key:"video",label:"YouTube video URL (optional — overrides search)",type:"text",value:l.video||""},
+    {key:"search",label:"YouTube search URL",type:"text",value:l.search||""}
+  ],(v)=>{
+    if(!v.name){ toast("Name required"); return false; }
+    const id=isNew? slug(v.name) : l.id;
+    const obj={ id, name:v.name, category:v.category, type:v.type,
+      sets:parseInt(v.sets)||1,
+      reps: v.type==="reps"?(parseInt(v.reps)||null):null,
+      durationSec: v.type==="time"?(parseInt(v.durationSec)||null):null,
+      cues: v.cues?v.cues.split("\n").map(s=>s.trim()).filter(Boolean):[],
+      video: v.video||null,
+      search: v.search|| ("https://www.youtube.com/results?search_query="+encodeURIComponent(v.name+" technique")) };
+    if(v.type==="distance") obj.distanceKm=parseFloat(v.distanceKm)||1;
+    db.ref("spaces/"+S.code+"/library/"+id).set(obj); toast(isNew?"Skill added":"Saved");
+  });
+}
+function editTest(t){
+  const isNew=!t;
+  t=t||{unit:"s",lowerIsBetter:true,equipment:[]};
+  openForm(isNew?"New test":"Edit test",[
+    {key:"name",label:"Name",type:"text",value:t.name||""},
+    {key:"unit",label:"Unit (s, cm, reps…)",type:"text",value:t.unit||"s"},
+    {key:"lowerIsBetter",label:"Lower score is better (e.g. timed tests)",type:"check",value:!!t.lowerIsBetter},
+    {key:"description",label:"Short description",type:"text",value:t.description||""},
+    {key:"protocol",label:"How to run it",type:"textarea",value:t.protocol||""},
+    {key:"equipment",label:"Equipment (comma separated)",type:"text",value:(t.equipment||[]).join(", ")},
+    {key:"search",label:"YouTube search URL",type:"text",value:t.search||""}
+  ],(v)=>{
+    if(!v.name){toast("Name required");return false;}
+    const id=isNew?slug(v.name):t.id;
+    db.ref("spaces/"+S.code+"/tests/"+id).set({ id, name:v.name, unit:v.unit||"s", lowerIsBetter:!!v.lowerIsBetter,
+      description:v.description||"", protocol:v.protocol||"",
+      equipment: v.equipment?v.equipment.split(",").map(s=>s.trim()).filter(Boolean):[],
+      search: v.search|| ("https://www.youtube.com/results?search_query="+encodeURIComponent(v.name+" test how to")) });
+    toast(isNew?"Test added":"Saved");
+  });
+}
+function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")+"-"+Math.floor(Math.random()*900+100); }
+
+function exportData(){
+  db.ref("spaces/"+S.code).once("value").then(snap=>{
+    const data=JSON.stringify(snap.val()||{},null,2);
+    const blob=new Blob([data],{type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+    a.download="arya-playbook-"+S.code+"-"+todayISO()+".json"; a.click();
+    toast("Backup downloaded");
+  });
+}
+function importData(){
+  const inp=document.createElement("input"); inp.type="file"; inp.accept="application/json,.json";
+  inp.onchange=()=>{ const f=inp.files[0]; if(!f) return; const rd=new FileReader();
+    rd.onload=()=>{ try{ const obj=JSON.parse(rd.result); if(confirm("Replace ALL data in this space with the backup?")){ db.ref("spaces/"+S.code).set(obj).then(()=>{ toast("Imported"); }); } }catch(e){ toast("Invalid file"); } };
+    rd.readAsText(f);
+  };
+  inp.click();
+}
+
+/* ============================================================
+   6) CHART (tiny inline SVG line chart)
+   ============================================================ */
+function lineChartSVG(points,opts){
+  opts=opts||{};
+  if(!points||!points.length) return '<div class="empty">No data yet</div>';
+  const w=320,h=130,pad=26;
+  let vals=points.map(p=>p.value);
+  let min=opts.min!=null?opts.min:Math.min(...vals);
+  let max=opts.max!=null?opts.max:Math.max(...vals);
+  if(min===max){ min=min-(Math.abs(min)*0.1||1); max=max+(Math.abs(max)*0.1||1); }
+  const n=points.length;
+  const X=i=> pad + (n===1? (w-2*pad)/2 : i*(w-2*pad)/(n-1));
+  const Y=v=> h-pad - (v-min)/(max-min)*(h-2*pad);
+  const fmt=opts.fmt||((v)=>String(v));
+  let dots="",path="";
+  points.forEach((p,i)=>{ const x=X(i),y=Y(p.value); path+=(i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1)+" "; dots+=`<circle class="dt" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3"/>`; });
+  // x labels: first, middle, last
+  let labels="";
+  const showIdx = n<=4? points.map((_,i)=>i) : [0,Math.floor((n-1)/2),n-1];
+  showIdx.forEach(i=>{ labels+=`<text x="${X(i).toFixed(1)}" y="${h-8}" text-anchor="middle">${esc(points[i].label)}</text>`; });
+  // y end labels
+  const yTop=`<text x="4" y="${(pad+4)}">${esc(fmt(max))}</text>`;
+  const yBot=`<text x="4" y="${(h-pad)}">${esc(fmt(min))}</text>`;
+  return `<svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+    <line class="gl" x1="${pad}" y1="${pad}" x2="${pad}" y2="${h-pad}"/>
+    <line class="gl" x1="${pad}" y1="${h-pad}" x2="${w-6}" y2="${h-pad}"/>
+    ${yTop}${yBot}
+    <path class="ln" d="${path.trim()}"/>${dots}${labels}
+  </svg>`;
+}
+function shortDate(iso){ if(!iso) return ""; const p=iso.split("-"); return p[2]+"/"+p[1]; }
+function longDate(iso){ if(!iso) return ""; const d=new Date(iso+"T00:00:00"); return d.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"}); }
+
+/* ============================================================
+   7) MODAL + FORM
+   ============================================================ */
+function openModalHTML(html){ $("mbox").innerHTML=html; $("ov").classList.add("open"); }
+function closeModal(){ $("ov").classList.remove("open"); }
+$("ov").addEventListener("click",e=>{ if(e.target.id==="ov") closeModal(); });
+window.closeModal=closeModal;
+
+function openForm(title,fields,onSave){
+  let body="";
+  fields.forEach(f=>{
+    if(f.type==="static"){ body+=`<div class="field"><label>${esc(f.label)}</label><div style="font-size:22px;font-weight:800">${esc(f.value)}</div></div>`; return; }
+    if(f.type==="check"){ body+=`<div class="field"><label class="check"><input type="checkbox" data-k="${f.key}" ${f.value?"checked":""}/> ${esc(f.label)}</label></div>`; return; }
+    if(f.type==="textarea"){ body+=`<div class="field"><label>${esc(f.label)}</label><textarea data-k="${f.key}">${esc(f.value||"")}</textarea></div>`; return; }
+    if(f.type==="select"){ body+=`<div class="field"><label>${esc(f.label)}</label><select data-k="${f.key}">${(f.options||[]).map(o=>`<option value="${esc(o[0])}" ${String(o[0])===String(f.value)?"selected":""}>${esc(o[1])}</option>`).join("")}</select></div>`; return; }
+    const t = f.type==="password"?"password":(f.type==="number"?"number":(f.type==="date"?"date":"text"));
+    const extra = f.step?`step="${f.step}"`:(f.type==="number"?'inputmode="decimal"':"");
+    body+=`<div class="field"><label>${esc(f.label)}</label><input type="${t}" ${extra} data-k="${f.key}" value="${esc(f.value==null?"":f.value)}" /></div>`;
+  });
+  openModalHTML(`<h3>${esc(title)}</h3>${body}<div class="m-actions"><button class="btn sec" id="fCancel">Cancel</button><button class="btn" id="fSave">Save</button></div>`);
+  $("fCancel").onclick=closeModal;
+  $("fSave").onclick=()=>{
+    const v={};
+    $("mbox").querySelectorAll("[data-k]").forEach(inp=>{
+      v[inp.dataset.k] = inp.type==="checkbox"? inp.checked : inp.value;
+    });
+    const res=onSave(v);
+    if(res!==false) closeModal();
+  };
+}
+
+// keep stopwatch ticking smoothly while on Run view
+window.addEventListener("focus",()=>{ if(S.sw.running) updateSwDisplay(); });
+</script>
+</body>
+</html>
